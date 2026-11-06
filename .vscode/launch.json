@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": "c:/Users/tatia/Gabriel/trab_arq-20261106T122920Z-1-001/Simulador_Ahmes(Gabriel Kenji e Lana Cristina)",
+      "program": "c:/Users/tatia/Gabriel/trab_arq-20261106T122920Z-1-001/Simulador_Ahmes(Gabriel Kenji e Lana Cristina)/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
