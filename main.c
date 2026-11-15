@@ -201,6 +201,7 @@ int flagV = 0;
 #define JNV(end) {\
     if(!flagV) {\
         pc = end;\
+    } else {\
         pc += 2;\
     }\
 }
