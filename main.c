@@ -61,13 +61,11 @@ int flagV = 0;
 
 #define JMP(end) {\
     pc = end;\
-    goto end;\
 }
 
 #define JN(end) {\
     if(flagN) {\
         pc = end;\
-        goto end;\
     } else {\
         pc += 2;\
     }\
@@ -76,7 +74,6 @@ int flagV = 0;
 #define JZ(end) {\
     if(flagZ) {\
         pc = end;\
-        goto end;\
     } else {\
         pc += 2;\
     }\
@@ -148,7 +145,6 @@ int flagV = 0;
 #define JP(end) {\
     if(!flagN) {\
         pc = end;\
-        goto end;\
     } else {\
         pc += 2;\
     }\
@@ -157,7 +153,6 @@ int flagV = 0;
 #define JNZ(end) {\
     if(!flagZ) {\
         pc = end;\
-        goto end;\
     } else {\
         pc += 2;\
     }\
@@ -166,7 +161,6 @@ int flagV = 0;
 #define JC(end) {\
     if(flagC) {\
         pc = end;\
-        goto end;\
     } else {\
         pc += 2;\
     }\
@@ -175,7 +169,6 @@ int flagV = 0;
 #define JNC(end) {\
     if(!flagC) {\
         pc = end;\
-        goto end;\
     } else {\
         pc += 2;\
     }\
@@ -184,7 +177,6 @@ int flagV = 0;
 #define JB(end) {\
     if(flagB) {\
         pc = end;\
-        goto end;\
     } else {\
         pc += 2;\
     }\
@@ -193,7 +185,6 @@ int flagV = 0;
 #define JNB(end) {\
     if(!flagB) {\
         pc = end;\
-        goto end;\
     } else {\
         pc += 2;\
     }\
@@ -202,7 +193,6 @@ int flagV = 0;
 #define JV(end) {\
     if(flagV) {\
         pc = end;\
-        goto end;\
     } else {\
         pc += 2;\
     }\
@@ -211,18 +201,121 @@ int flagV = 0;
 #define JNV(end) {\
     if(!flagV) {\
         pc = end;\
-        goto end;\
-    } else {\
         pc += 2;\
     }\
 }
 
 #define PRINT(i) printf("%u \n", i)
 
-int main(){
-    printf("Testando 123");
 
-    system("pause");
+int carregarMemoria(const char *nomeArquivo, unsigned int mem[]) {
+    FILE *fp = fopen(nomeArquivo, "r");
+    if (fp == NULL) {
+        return 0;
+    }
+
+    char linha[128];
+    unsigned int idxSeq = 0;
+
+    while (fgets(linha, sizeof(linha), fp) != NULL) {
+        unsigned int col1 = 0, col2 = 0, col3 = 0;
+        int lidos = sscanf(linha, "%u %u %u", &col1, &col2, &col3);
+
+        if (lidos == 1 && idxSeq < 256) {
+            mem[idxSeq++] = col1 & 0xFF;
+        } else if (lidos >= 2 && col1 < 256) {
+            mem[col1] = col2 & 0xFF;
+            if (lidos == 3 && (col1 + 1) < 256) {
+                mem[col1 + 1] = col3 & 0xFF;
+            }
+        }
+    }
+
+    fclose(fp);
+    return 1;
+}
+
+void imprimirMemoria(const unsigned int mem[]) {
+    for (unsigned int i = 0; i < 32; i++) {
+        printf("%3u:%3u  %3u:%3u  %3u:%3u  %3u:%3u  %3u:%3u  %3u:%3u  %3u:%3u  %3u:%3u\n",
+            i, mem[i],
+            i + 32, mem[i + 32],
+            i + 64, mem[i + 64],
+            i + 96, mem[i + 96],
+            i + 128, mem[i + 128],
+            i + 160, mem[i + 160],
+            i + 192, mem[i + 192],
+            i + 224, mem[i + 224]);
+    }
+}
+
+int main(int argc, char *argv[]) {
+    unsigned int pc = 0;
+    unsigned int ac = 0;
+    unsigned int mem[256];
+
+    for (int i = 0; i < 256; i++) {
+        mem[i] = 0;
+    }
+
+    const char *nomeArquivo = (argc > 1) ? argv[1] : "programa.txt";
+
+    if (!carregarMemoria(nomeArquivo, mem)) {
+        printf("Erro: o arquivo '%s' nao pode ser aberto.\n", nomeArquivo);
+        return 1;
+    }
+
+    printf("\nMemoria antes do processamento:\n");
+    imprimirMemoria(mem);
+
+    int rodando = 1;
+    while (rodando && pc < 256) {
+        unsigned int opcode = mem[pc];
+        unsigned int end = (pc + 1 < 256) ? mem[pc + 1] : 0;
+
+        switch (opcode) {
+            case 0:   NOP; break;              
+            case 16:  STA(end); break;         
+            case 32:  LDA(end); break;         
+            case 48:  ADD(end); break;         
+            case 64:  OR(end); break;         
+            case 80:  AND(end); break;         
+            case 96:  NOT; break;              
+            case 112: SUB(end); break;         
+            case 116: ADC(end); break;         
+            case 120: SBC(end); break;         
+            case 128: JMP(end); break;         
+            case 144: JN(end); break;          
+            case 148: JP(end); break;          
+            case 152: JV(end); break;          
+            case 156: JNV(end); break;         
+            case 160: JZ(end); break;          
+            case 164: JNZ(end); break;         
+            case 176: JC(end); break;          
+            case 180: JNC(end); break;         
+            case 184: JB(end); break;          
+            case 188: JNB(end); break;         
+            case 224: SHR; break;              
+            case 225: SHL; break;              
+            case 226: ROR; break;              
+            case 227: ROL; break;              
+            case 240: HLT; rodando = 0; break; 
+            default:
+                printf("\nInstrucao invalida (opcode %u) no endereco %u.\n", opcode, pc);
+                rodando = 0;
+                break;
+        }
+    }
+
+    printf("\nMemoria apos o processamento:\n");
+    imprimirMemoria(mem);
+
+    printf("\n--- ESTADO FINAL DOS REGISTRADORES E FLAGS ---\n");
+    printf("PC = %u\n", pc);
+    printf("AC = %u (complemento de 2: %d)\n", ac, (signed char)ac);
+    printf("Flags -> N = %d | Z = %d | C = %d | B = %d | V = %d\n",
+           flagN, flagZ, flagC, flagB, flagV);
+
     return 0;
 }
 
